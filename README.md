@@ -77,6 +77,14 @@ The USB Cold Storage project allows you to create a secure, offline environment 
     ❯ diskutil eject /dev/disk2
     ```
 
+## Notes
+
+You can use tools Rufus on Windows, or Etcher on multiple platforms to write the ISO to a USB Stick. These tools will copy the ISO to the USB stick and make it bootable.
+
+## Known Problems
+
+- The ISO file might not be named usb-cold-storage.iso (Please just check the output folder).
+
 ## Usage
 
 1. **Boot from USB**: Insert the USB stick into your computer and boot from it. This usually involves pressing a key during startup (such as F12, Esc, or Del) to enter the boot menu and selecting the USB device.
