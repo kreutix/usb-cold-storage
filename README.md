@@ -87,7 +87,7 @@ You can use tools Rufus on Windows, or Etcher on multiple platforms to write the
 
 ## Usage
 
-1. **Boot from USB**: Insert the USB stick into your computer and boot from it. This usually involves pressing a key during startup (such as F12, Esc, or Del) to enter the boot menu and selecting the USB device.
+1. **Boot from USB**: Insert the USB stick into your computer and boot from it. This usually involves pressing a key during startup (such as F12, Esc, or Del) to enter the boot menu and selecting the USB device. Ideally, this should not be a computer that is used for other purposes in order to minimize the risk as much as possible.
 
 2. **Offline Environment**: Once booted, you will be in a secure, offline environment running Debian with Xfce. Firefox will start automatically with a welcome page.
 
