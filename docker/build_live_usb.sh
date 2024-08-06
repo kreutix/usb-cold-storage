@@ -56,7 +56,6 @@ cat << 'EOF' > config/hooks/live/0501-configure-autostart.hook.chroot
 mkdir -p /opt/custom
 cd /opt/custom
 wget https://github.com/BitcoinQnA/seedtool/releases/download/2.1.0/index.html
-EOL
 
 # Create a desktop entry to auto-start Firefox with index.html
 mkdir -p /etc/xdg/autostart
