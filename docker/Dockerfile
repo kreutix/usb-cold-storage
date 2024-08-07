@@ -1,5 +1,5 @@
 # Use an official Debian image as a parent image
-FROM debian:bullseye
+FROM debian:bookworm
 
 # Set environment variables to avoid interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive

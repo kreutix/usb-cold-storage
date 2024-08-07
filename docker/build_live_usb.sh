@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-DISTRO="bullseye" # Debian 11 (Bullseye)
+DISTRO="bookworm"
 IMAGE_NAME="usb-cold-storage"
 WORK_DIR="/home/builder/live-build"
 
@@ -35,6 +35,7 @@ xfce4-goodies
 xorg
 lightdm
 wget
+fuse
 EOF
 
 # Create a hook to install Electrum
@@ -56,6 +57,7 @@ cat << 'EOF' > config/hooks/live/0501-configure-autostart.hook.chroot
 mkdir -p /opt/custom
 cd /opt/custom
 wget https://github.com/BitcoinQnA/seedtool/releases/download/2.1.0/index.html
+wget https://raw.githubusercontent.com/kreutix/bip39-deterministic-phrase/master/combined.html
 
 # Create a desktop entry to auto-start Firefox with index.html
 mkdir -p /etc/xdg/autostart
@@ -63,7 +65,7 @@ mkdir -p /etc/xdg/autostart
 cat << 'EOL' > /etc/xdg/autostart/firefox.desktop
 [Desktop Entry]
 Type=Application
-Exec=firefox-esr /opt/custom/index.html
+Exec=firefox-esr /opt/custom/index.html /opt/custom/combined.html
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
