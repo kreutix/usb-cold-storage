@@ -87,7 +87,7 @@ EOF
 
 chmod +x config/hooks/live/0501-configure-autostart.hook.chroot
 
-# Build the live image using unshare to create a new namespace
+# Build the live image with live-build
 lb build
 
 # Move iso files to output directory
