@@ -5,4 +5,4 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
-sudo dd if=output/usb-cold-storage.iso of=$1 bs=1M status=progress
+sudo dd if=output/live-image-amd64.hybrid.iso of=$1 bs=1M status=progress
