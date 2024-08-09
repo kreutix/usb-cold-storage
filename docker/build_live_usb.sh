@@ -9,8 +9,6 @@ WORK_DIR="/home/builder/live-build"
 mkdir -p $WORK_DIR
 cd $WORK_DIR
 
-lb clean
-
 # Configure live-build
 lb config \
     --distribution $DISTRO \
@@ -87,6 +85,15 @@ EOL
 EOF
 
 chmod +x config/hooks/live/0501-configure-autostart.hook.chroot
+
+# Create a configuration file for German keyboard layout
+mkdir -p config/includes.chroot/etc/default
+cat << EOF > config/includes.chroot/etc/default/keyboard
+XKBMODEL="pc105"
+XKBLAYOUT="de"
+XKBVARIANT=""
+XKBOPTIONS=""
+EOF
 
 # Build the live image with live-build
 lb build
