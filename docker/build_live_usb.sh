@@ -19,7 +19,7 @@ lb config \
     --binary-images iso-hybrid \
     --bootappend-live "boot=live components"
 
-# Add Firefox, Xfce, and dependencies for Electrum to the package list
+# Add Firefox, Xfce, and dependencies for Sparrow to the package list
 mkdir -p config/package-lists
 cat << EOF > config/package-lists/custom.list.chroot
 firefox-esr
@@ -36,6 +36,8 @@ xorg
 lightdm
 wget
 fuse
+libv4l-dev
+v4l-utils
 EOF
 
 # Create a hook to install Electrum
@@ -49,6 +51,19 @@ chmod +x electrum-4.5.5-x86_64.AppImage
 EOF
 
 chmod +x config/hooks/live/0500-install-electrum.hook.chroot
+
+# Create a hook to install Sparrow Bitcoin Wallet from the deb package
+mkdir -p config/hooks/live
+cat << 'EOF' > config/hooks/live/0500-install-sparrow.hook.chroot
+#!/bin/bash
+# Download and install Sparrow
+cd /opt
+wget https://github.com/sparrowwallet/sparrow/releases/download/1.9.1/sparrow_1.9.1-1_amd64.deb
+dpkg -i sparrow_1.9.1-1_amd64.deb
+apt-get install -f -y  # Install any missing dependencies
+EOF
+
+chmod +x config/hooks/live/0500-install-sparrow.hook.chroot
 
 # Create a hook to add index.html and configure autostart
 cat << 'EOF' > config/hooks/live/0501-configure-autostart.hook.chroot
@@ -72,15 +87,15 @@ Name=Firefox
 Comment=Auto start Firefox with index.html
 EOL
 
-cat << 'EOL' > /etc/xdg/autostart/electrum.desktop
+cat << 'EOL' > /etc/xdg/autostart/sparrow.desktop
 [Desktop Entry]
 Type=Application
-Exec=/opt/electrum-4.5.5-x86_64.AppImage
+Exec=/opt/sparrow/bin/Sparrow
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
-Name=Electrum
-Comment=Auto start Electrum
+Name=Sparrow Bitcoin Wallet
+Comment=Auto start Sparrow Bitcoin Wallet
 EOL
 EOF
 
