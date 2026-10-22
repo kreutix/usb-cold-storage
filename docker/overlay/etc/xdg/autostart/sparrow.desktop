@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Sparrow Bitcoin Wallet
+Comment=Auto start Sparrow Bitcoin Wallet
+Exec=/opt/sparrowwallet/bin/Sparrow
+X-GNOME-Autostart-enabled=true
