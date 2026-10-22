@@ -93,10 +93,21 @@ lb config \
   --image-name "usb-cold-storage" \
   --bootappend-live "boot=live components quiet splash locales=de_DE.UTF-8 keyboard-layouts=de timezone=Europe/Berlin username=cold hostname=coldstorage ipv6.disable=1 init_on_free=1 page_alloc.shuffle=1"
 
+# Boot menus: auto-boot the live system after 5 s (default templates wait forever)
+mkdir -p config/bootloaders
+cp -a /usr/share/live/build/bootloaders/grub-pc \
+      /usr/share/live/build/bootloaders/isolinux \
+      /usr/share/live/build/bootloaders/syslinux \
+      /usr/share/live/build/bootloaders/syslinux_common config/bootloaders/
+sed -i 's/^timeout 0$/timeout 50/' config/bootloaders/isolinux/isolinux.cfg config/bootloaders/syslinux/syslinux.cfg
+sed -i 's/^set default=0$/set default=0\nset timeout=5/' config/bootloaders/grub-pc/config.cfg
+
 cat > config/package-lists/desktop.list.chroot <<'EOF'
 live-boot
 live-config
 live-config-systemd
+user-setup
+sudo
 systemd-sysv
 locales
 keyboard-configuration
@@ -141,10 +152,15 @@ cat > config/hooks/live/0900-air-gap.hook.chroot <<'EOF'
 #!/bin/sh
 # Air gap: remove every network/radio driver and network daemon from the image.
 set -e
-apt-get purge -y --auto-remove \
-  network-manager wpasupplicant iwd bluez modemmanager avahi-daemon \
-  openssh-client openssh-server isc-dhcp-client dhcpcd-base ifupdown \
-  firmware-iwlwifi firmware-realtek firmware-atheros firmware-brcm80211 2>/dev/null || true
+# One package at a time: apt aborts the whole purge on a single unknown name.
+for pkg in network-manager wpasupplicant iwd bluez modemmanager avahi-daemon \
+           openssh-client openssh-server isc-dhcp-client dhcpcd-base ifupdown \
+           firmware-iwlwifi firmware-realtek firmware-atheros firmware-brcm80211; do
+  if dpkg -s "$pkg" >/dev/null 2>&1; then
+    apt-get purge -y "$pkg"
+  fi
+done
+apt-get autoremove --purge -y
 for kdir in /lib/modules/*; do
   [ -d "$kdir" ] || continue
   rm -rf "$kdir/kernel/drivers/net" \
