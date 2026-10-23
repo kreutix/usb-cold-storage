@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Electrum Bitcoin Wallet
+Comment=Electrum (offline)
+Exec=/opt/electrum/electrum.AppImage --offline
+Icon=wallet
+Categories=Finance;
+Terminal=false

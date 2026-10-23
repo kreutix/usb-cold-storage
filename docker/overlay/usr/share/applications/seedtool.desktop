@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Seedtool
+Comment=Offline BIP39 seed tool
+Exec=firefox-esr file:///opt/seedtool/index.html
+Icon=dialog-password
+Categories=Utility;
+Terminal=false

@@ -1,102 +1,80 @@
 # USB Cold Storage
 
-This project aims to create a custom Debian live USB specifically designed for Bitcoin cold storage. It uses `live-build` to create the live USB image. Currently, the project is in its initial stages and is a work in progress.
+A custom **Debian 13 "trixie"** live system (amd64) for air-gapped Bitcoin cold storage. It is meant for old x86 hardware that never goes online. It is built with `live-build` inside Docker and boots from a USB stick on both legacy BIOS and UEFI, including **Secure Boot**.
 
-## Project Status
+## What's inside
 
-**Work in Progress**: This project is in its initial stages. Contributions and feedback are welcome.
+| Component | Version | How it is verified at build time |
+|-----------|---------|----------------------------------|
+| Debian | 13 "trixie" (+ security updates) | Signed Debian archive |
+| Electrum | 4.8.2 (AppImage, starts with `--offline`) | GPG signature by ThomasV `6694D8DE…7F9470E6` |
+| Sparrow Wallet | 2.5.5 (.deb, bundled JRE) | GPG-signed manifest by Craig Raw `D4D0D320…4C674B40` + SHA-256 |
+| Seedtool | [kreutix/seedtool](https://github.com/kreutix/seedtool) @ `c330f0c` | Pinned SHA-256 |
+| Desktop | Xfce, Firefox ESR (opens the seed tool locally) | Debian packages |
 
-## Introduction
+All versions, signing-key fingerprints and hashes are pinned in [`docker/versions.env`](docker/versions.env). The signing keys live in [`docker/keys/`](docker/keys/). If a key, signature or hash doesn't match, the build aborts.
 
-The USB Cold Storage project allows you to create a secure, offline environment for managing your Bitcoin. By using a custom Debian live USB, you can ensure that your Bitcoin wallet is only accessed in a controlled, offline setting, reducing the risk of online threats and hacks. This is particularly useful for long-term storage of your Bitcoin, also known as "cold storage."
+## Air-gap hardening
 
-## Prerequisites
+- **No network at all:** every network, Wi-Fi, Bluetooth, NFC and WWAN kernel driver is deleted from the image, including the initramfs. The modules are also blocked via `modprobe.d`. NetworkManager, wpa_supplicant, BlueZ, ModemManager, Avahi, SSH and DHCP are not installed. No firmware packages are included. `ipv6.disable=1` is set.
+- **Amnesic:** everything runs from RAM. There is no persistence, swap is masked and core dumps are disabled.
+- **Memory hygiene:** `init_on_free=1` and `page_alloc.shuffle=1` are set.
+- **Firefox:** enterprise policies disable updates, telemetry and accounts, and point a locked proxy at a dead port.
+- **Webcam stays available** (v4l, zbar) so you can scan PSBT QR codes in Sparrow.
+- German keyboard/locale, auto-login as user `cold`.
 
-- Docker & Git
-- A USB stick for testing the live image
+## Build
 
-## Build Instructions
+Prerequisites: Docker and Git. On Apple Silicon you need an amd64-capable runtime that runs amd64 binaries via **qemu-user**, e.g. [Colima](https://github.com/abiosoft/colima):
 
-1. **Clone the Repository**:
+```bash
+colima start --vm-type vz --cpu 6 --memory 12
+```
 
-    ```bash
-    ❯ git clone https://github.com/kreutix/usb-cold-storage.git
-    ❯ cd usb-cold-storage
-    ```
+Do **not** use Rosetta (`--vz-rosetta`) for this build. Rosetta needs `/proc` inside the chroot, and that isn't there yet when debootstrap first runs, so debootstrap fails with `chroot … /bin/true`. If Rosetta is already on, switch the handler inside the VM:
+`colima ssh -- sudo sh -c 'echo 0 > /proc/sys/fs/binfmt_misc/rosetta; echo 1 > /proc/sys/fs/binfmt_misc/qemu-x86_64'`
 
-2. **Build the Docker Image**:
+```bash
+git clone https://github.com/kreutix/usb-cold-storage.git
+cd usb-cold-storage
+./build.sh   # builder image (Debian trixie + live-build)
+./run.sh     # builds output/usb-cold-storage-<version>-amd64.iso (+ .sha256, .packages)
+```
 
-    ```bash
-    ❯ cat build.sh
-    #!/bin/sh
+`./shell.sh` opens a shell in the builder for debugging.
 
-    docker build --platform=linux/amd64 -t usb-cold-storage-builder .
-    
-    ❯ ./build.sh
-    ```
+To update a wallet, change the version in `docker/versions.env` and rebuild. If the signing key has changed, also update the key in `docker/keys/` and its fingerprint, after checking it against the project's website.
 
-3. **Run the Docker Container**:
+## Write the ISO to a USB stick (macOS)
 
-    ```bash
-    ❯ cat run.sh
-    #!/bin/sh
+```bash
+diskutil list external        # find the stick, e.g. disk4 - check the size!
+./tousb.sh disk4              # verifies the checksum, refuses internal disks, asks for YES
+```
 
-    docker run --platform=linux/amd64 --rm -it --privileged -v $(pwd)/output:/output usb-cold-storage-builder /home/builder/build_live_usb.sh
+Manual alternative:
 
-    ❯ ./run.sh
-    ```
+```bash
+diskutil unmountDisk /dev/disk4
+sudo dd if=output/usb-cold-storage-2026.10-amd64.iso of=/dev/rdisk4 bs=4m
+sync && diskutil eject /dev/disk4
+```
 
-4. **Write the ISO to a USB Stick (on MacOS)**:
-
-    Identify your USB stick (e.g., `/dev/disk4`) and unmount it:
-
-    ```bash
-    ❯ diskutil list
-    ❯ diskutil unmountDisk /dev/disk4
-    ```
-
-    Write the ISO to the USB stick using `dd` while showing a progress bar for copying:
-
-    ```bash
-    ❯ cat tousb.sh
-    #!/bin/sh
-
-    if [ -z "$1" ]; then
-    echo "usage: ./tousb.sh <disk>"
-    exit 1
-    fi
-
-    sudo dd if=output/usb-cold-storage.iso of=$1 bs=1M status=progress
-
-    ❯ ./tousb.sh /dev/rdisk4
-    ```
-
-    Eject the USB stick:
-
-    ```bash
-    ❯ diskutil eject /dev/disk2
-    ```
-
-## Notes
-
-You can use tools Rufus on Windows, or Etcher on multiple platforms to write the ISO to a USB Stick. These tools will copy the ISO to the USB stick and make it bootable.
-
-## Known Problems
-
-- The ISO file might not be named usb-cold-storage.iso (Please just check the output folder).
+When macOS then says the disk is not readable, choose **Ignore**. On Windows use Rufus (DD mode); otherwise use balenaEtcher.
 
 ## Usage
 
-1. **Boot from USB**: Insert the USB stick into your computer and boot from it. This usually involves pressing a key during startup (such as F12, Esc, or Del) to enter the boot menu and selecting the USB device. Ideally, this should not be a computer that is used for other purposes in order to minimize the risk as much as possible.
+1. Boot the offline machine from the stick: open the boot menu (usually F12, F11, F8 or Esc) and pick the USB device. Old machines boot via BIOS, newer ones via UEFI. Secure Boot can stay on.
+2. Xfce starts and opens Sparrow and the seed tool (Firefox, local file) automatically. Electrum is in the application menu and runs in offline mode.
+3. Move PSBTs on and off the machine by QR code (webcam) or SD card/USB stick. The machine itself has no network.
 
-2. **Offline Environment**: Once booted, you will be in a secure, offline environment running Debian with Xfce. Firefox will start automatically with a welcome page.
+Use a dedicated machine that never connects to the internet.
 
-3. **Manage Bitcoin Wallet**: Use Electrum to manage your Bitcoin wallet securely in this offline environment.
+## Known limitations
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a pull request or open an issue.
+- The build is not yet bit-for-bit reproducible (packages come from the live Debian mirror, not a pinned snapshot).
+- GRUB can pick the wrong medium when several Debian live sticks are plugged in at the same time ([#1081041](https://bugs.debian.org/1081041)).
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT, see [LICENSE](LICENSE).

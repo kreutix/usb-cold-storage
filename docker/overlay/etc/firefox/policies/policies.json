@@ -1,0 +1,15 @@
+{
+  "policies": {
+    "DisableAppUpdate": true,
+    "DisableTelemetry": true,
+    "DisableFirefoxStudies": true,
+    "DisablePocket": true,
+    "DisableFirefoxAccounts": true,
+    "DontCheckDefaultBrowser": true,
+    "OverrideFirstRunPage": "",
+    "OverridePostUpdatePage": "",
+    "NoDefaultBookmarks": true,
+    "Homepage": { "URL": "file:///opt/seedtool/index.html", "Locked": true, "StartPage": "homepage" },
+    "Proxy": { "Mode": "manual", "HTTPProxy": "127.0.0.1:9", "UseHTTPProxyForAllProtocols": true, "Locked": true }
+  }
+}
